@@ -18,10 +18,7 @@ const (
 )
 
 func Usage() {
-	_, err := fmt.Println(usageSchema)
-	if err != nil {
-		return
-	}
+	fmt.Println(usageSchema)
 	flag.PrintDefaults()
 }
 
