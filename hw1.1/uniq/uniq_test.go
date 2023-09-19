@@ -117,8 +117,9 @@ var tests = []struct {
 			"I love music.",
 			"",
 			"I love music of Kartik.",
+			"We love music of Kartik.",
 			"Thanks."},
-		options: Options{F: 1}},
+		options: Options{S: 1}},
 	{in: []string{
 		"I LOVE MUSIC.",
 		"We love music.",
@@ -165,6 +166,20 @@ var tests = []struct {
 			"",
 			"Thanks."},
 		options: Options{U: true, I: true, F: 1}},
+	{in: []string{
+		"Я люблю музыку",
+		"А люблю музыку",
+		"  люблю музыку"},
+		out: []string{
+			"Я люблю музыку"},
+		options: Options{S: 1}},
+	{in: []string{
+		"Они любят музыку",
+		"Дети любят музыку",
+		"Взрослые любят музыку"},
+		out: []string{
+			"Они любят музыку"},
+		options: Options{F: 1}},
 }
 
 func equal(a, b []string) bool {
@@ -182,7 +197,7 @@ func equal(a, b []string) bool {
 func TestUniq(t *testing.T) {
 	for n, tt := range tests {
 		t.Run(fmt.Sprintf("TEST#%d", n), func(t *testing.T) {
-			res := Uniq(tt.in, tt.options)
+			res, _ := Uniq(tt.in, tt.options)
 			if !equal(res, tt.out) {
 				t.Errorf("got %s, want %s", res, tt.out)
 			}

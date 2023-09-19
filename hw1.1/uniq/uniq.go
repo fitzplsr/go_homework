@@ -1,6 +1,7 @@
 package uniq
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 )
@@ -10,8 +11,8 @@ type Options struct {
 	D bool
 	U bool
 	I bool
-	F uint
-	S uint
+	F int
+	S int
 }
 
 func min(a, b int) int {
@@ -21,11 +22,20 @@ func min(a, b int) int {
 	return b
 }
 
-func Uniq(input []string, options Options) (output []string) {
+func equalStrings(a string, b string) bool {
+	return a == b
+}
+
+func Uniq(input []string, options Options) (output []string, err error) {
+	if options.F < 0 || options.S < 0 {
+		err = errors.New("-f -s flags must be positive integer")
+		return
+	}
 	var prevLine, prevCutLine, currentLine string
 	var currentLineIndex int
 	isFirst := true
 	countOfRepeated := 1
+
 	record := func() {
 		switch {
 		case options.C:
@@ -42,36 +52,42 @@ func Uniq(input []string, options Options) (output []string) {
 			output = append(output, prevLine)
 		}
 	}
+
 	for _, line := range input {
 		currentLine = line
 		if options.F != 0 && len(line) != 0 {
 			fields := strings.Fields(line)
-			if options.F > (uint)(len(fields)-1) {
+			if options.F > len(fields)-1 {
 				currentLineIndex = len(line)
 				currentLine = ""
 			} else {
 				currentLineIndex = strings.Index(line, fields[options.F])
+				currentLine = line[currentLineIndex:]
 			}
 		}
+
 		if len(line) != 0 && currentLineIndex != len(line) {
-			currentLine = line[min(currentLineIndex+(int)(options.S), len(line)-1):]
+			currentLine = string([]rune(currentLine)[min(options.S, len([]rune(currentLine))-1):])
 		}
+
 		if isFirst {
 			prevLine = line
 			prevCutLine = currentLine
 			isFirst = false
 			continue
 		}
-		isMatch := currentLine == prevCutLine
+		
+		compare := equalStrings
 		if options.I {
-			isMatch = strings.EqualFold(currentLine, prevCutLine)
+			compare = strings.EqualFold
 		}
+		isMatch := compare(currentLine, prevCutLine)
+
 		if !isMatch {
 			record()
 			prevLine = line
 			prevCutLine = currentLine
-			countOfRepeated = 1
-			continue
+			countOfRepeated = 0
 		}
 		countOfRepeated++
 	}

@@ -14,7 +14,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	if len(flag.Args()) > 2 {
-		flagsparser.Usage()
+		flag.Usage()
 		log.Fatal("too much arguments")
 	}
 
@@ -23,7 +23,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	outputStrings := uniq.Uniq(inputStrings, options)
+	outputStrings, err := uniq.Uniq(inputStrings, options)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	if err = iostrings.Write(outputStrings); err != nil {
 		log.Fatal(err.Error())
 	}
