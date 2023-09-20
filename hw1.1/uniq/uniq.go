@@ -35,6 +35,10 @@ func Uniq(input []string, options Options) (output []string, err error) {
 	var currentLineIndex int
 	isFirst := true
 	countOfRepeated := 1
+	compare := equalStrings
+	if options.I {
+		compare = strings.EqualFold
+	}
 
 	record := func() {
 		switch {
@@ -66,7 +70,7 @@ func Uniq(input []string, options Options) (output []string, err error) {
 			}
 		}
 
-		if len(line) != 0 && currentLineIndex != len(line) {
+		if options.S != 0 && len(line) != 0 && currentLineIndex != len(line) {
 			currentLine = string([]rune(currentLine)[min(options.S, len([]rune(currentLine))-1):])
 		}
 
@@ -76,11 +80,7 @@ func Uniq(input []string, options Options) (output []string, err error) {
 			isFirst = false
 			continue
 		}
-		
-		compare := equalStrings
-		if options.I {
-			compare = strings.EqualFold
-		}
+
 		isMatch := compare(currentLine, prevCutLine)
 
 		if !isMatch {
