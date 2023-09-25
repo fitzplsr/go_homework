@@ -55,6 +55,18 @@ var testsFailureIncorrectExpressionError = []struct {
 
 	{in: "1+1)",
 		err: &IncorrectExpressionError{}},
+
+	{in: "1 1",
+		err: &IncorrectExpressionError{}},
+
+	{in: "1 + 1-",
+		err: &IncorrectExpressionError{}},
+
+	{in: "-",
+		err: &IncorrectExpressionError{}},
+
+	{in: "1 / ",
+		err: &IncorrectExpressionError{}},
 }
 
 func TestCalcFailureIncorrectExpression(t *testing.T) {
@@ -62,7 +74,7 @@ func TestCalcFailureIncorrectExpression(t *testing.T) {
 		t.Run(fmt.Sprintf("TEST#%d", n), func(t *testing.T) {
 			_, err := Calc(tt.in)
 			if !errors.As(err, &tt.err) {
-				t.Errorf("Calc don't throw IncorrectExpressionError on data:%s", tt.in)
+				t.Errorf("calc don't throw IncorrectExpressionError on data:%s", tt.in)
 			}
 		})
 	}
@@ -78,7 +90,10 @@ var testsFailureComputeError = []struct {
 	{in: "1 / ( 1-1 )",
 		err: &ComputeError{}},
 
-	{in: "-",
+	{in: "1 / 0",
+		err: &ComputeError{}},
+
+	{in: "(-)1",
 		err: &ComputeError{}},
 }
 
@@ -87,7 +102,7 @@ func TestCalcFailureCompute(t *testing.T) {
 		t.Run(fmt.Sprintf("TEST#%d", n), func(t *testing.T) {
 			_, err := Calc(tt.in)
 			if !errors.As(err, &tt.err) {
-				t.Errorf("Calc don't throw ComputeError on data:%s", tt.in)
+				t.Errorf("calc don't throw ComputeError on data:%s", tt.in)
 			}
 		})
 	}

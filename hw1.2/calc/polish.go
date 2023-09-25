@@ -4,35 +4,29 @@ import (
 	"fmt"
 )
 
+var priorities = map[byte]int{
+	'(': 0,
+	')': 0,
+	'+': 1,
+	'-': 1,
+	'*': 2,
+	'/': 2,
+	'~': 3,
+}
+
 type IncorrectExpressionError struct {
 	message string
 }
 
 func (e *IncorrectExpressionError) Error() string {
-	return fmt.Sprintf("Incorrect expression: %s", e.message)
+	return fmt.Sprintf("incorrect expression: %s", e.message)
 }
 
-func getPriority(operation byte) (priority int) {
-	switch operation {
-	case '(', ')':
-		priority = 0
-	case '+', '-':
-		priority = 1
-	case '*', '/':
-		priority = 2
-	case '~':
-		priority = 3
-	}
-	return
-}
-
-func takeFromStack(operation byte, priority int) (result bool) {
+func takeFromStack(operation byte, priority int) bool {
 	if priority == 0 {
-		result = operation != '('
-	} else {
-		result = getPriority(operation) >= priority
+		return operation != '('
 	}
-	return
+	return priorities[operation] >= priority
 }
 
 func takeLower(operations *Stack, result *Stack, priority int) (err error) {
@@ -46,26 +40,32 @@ func takeLower(operations *Stack, result *Stack, priority int) (err error) {
 	return
 }
 
-func moveItem(result *Stack, operations *Stack, item Item, openBracket *bool) (err error) {
-	if item.Operation == 0 {
+func moveItem(result *Stack, operations *Stack, item Item, openBracket *bool) error {
+	switch item.Operation {
+	case 0:
 		*openBracket = false
 		result.Push(item)
-	} else if item.Operation == '(' {
+	case '(':
 		*openBracket = true
 		operations.Push(item)
-	} else if item.Operation == ')' && *openBracket {
-		err = &IncorrectExpressionError{"empty inside brackets"}
-	} else if takeLower(operations, result, getPriority(item.Operation)) == nil {
+	case ')':
+		if *openBracket {
+			return &IncorrectExpressionError{"empty inside brackets"}
+		}
+		fallthrough
+	default:
+		err := takeLower(operations, result, priorities[item.Operation])
+		if err != nil {
+			return &IncorrectExpressionError{"incorrect bracket order"}
+		}
 		if item.Operation == ')' {
 			operations.Pop()
 		} else {
 			*openBracket = false
 			operations.Push(item)
 		}
-	} else {
-		err = &IncorrectExpressionError{"incorrect bracket order"}
 	}
-	return
+	return nil
 }
 
 func convertToPostfix(stack *Stack) (err error) {

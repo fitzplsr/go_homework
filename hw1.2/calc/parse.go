@@ -6,12 +6,12 @@ import (
 	"unicode"
 )
 
-func isOperation(c byte) (result bool) {
+func isOperation(c byte) bool {
 	switch c {
 	case '-', '*', '/', '+', '(', ')':
-		result = true
+		return true
 	}
-	return
+	return false
 }
 
 func isUnaryMinus(stack *Stack) bool {
@@ -46,6 +46,9 @@ func parseInput(stack *Stack, str string) (err error) {
 			err = &IncorrectExpressionError{"error parse expression"}
 			break
 		}
+	}
+	if stack.Back().Operation != 0 && priorities[stack.Back().Operation] > 0 {
+		err = &IncorrectExpressionError{"error parse expression"}
 	}
 	return
 }
