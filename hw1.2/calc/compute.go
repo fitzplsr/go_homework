@@ -49,7 +49,7 @@ func doOperation(result *Stack, taken byte) error {
 		if result.Length() < 1 {
 			return &ComputeError{"error doing operation"}
 		}
-		item, _ := result.Pop()
+		item := result.Pop()
 		return doUnary(result, taken, item)
 	}
 
@@ -57,8 +57,8 @@ func doOperation(result *Stack, taken byte) error {
 		return &ComputeError{"error doing operation"}
 	}
 
-	first, _ := result.Pop()
-	second, _ := result.Pop()
+	first := result.Pop()
+	second := result.Pop()
 	return doBinary(result, taken, first, second)
 }
 
@@ -66,11 +66,11 @@ func compute(stack *Stack) (resultNum float64, err error) {
 	var result Stack
 	for err == nil && stack.Length() > 0 {
 		if stack.Back().Operation == 0 {
-			item, _ := stack.Pop()
+			item := stack.Pop()
 			result.Push(item)
 			continue
 		}
-		taken, _ := stack.Pop()
+		taken := stack.Pop()
 		err = doOperation(&result, taken.Operation)
 	}
 	if result.Length() > 1 {
@@ -79,7 +79,7 @@ func compute(stack *Stack) (resultNum float64, err error) {
 	if err != nil {
 		return
 	}
-	item, _ := result.Pop()
+	item := result.Pop()
 	resultNum = item.Number
 	return
 }

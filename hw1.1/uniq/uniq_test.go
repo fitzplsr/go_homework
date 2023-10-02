@@ -2,6 +2,7 @@ package uniq
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -182,25 +183,11 @@ var tests = []struct {
 		options: Options{F: 1}},
 }
 
-func equal(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func TestUniq(t *testing.T) {
 	for n, tt := range tests {
 		t.Run(fmt.Sprintf("TEST#%d", n), func(t *testing.T) {
 			res, _ := Uniq(tt.in, tt.options)
-			if !equal(res, tt.out) {
-				t.Errorf("got %s, want %s", res, tt.out)
-			}
+			assert.Equal(t, tt.out, res, fmt.Sprintf("got %s, want %s", res, tt.out))
 		})
 	}
 }

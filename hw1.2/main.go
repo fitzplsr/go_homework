@@ -9,12 +9,14 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		log.Fatal("Enter the expression to the args")
+		log.Println("enter the expression to the args")
+		return
 	}
 	input := os.Args[1]
 	result, err := calc.Calc(input)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Println(err.Error())
+		return
 	}
 	fmt.Println(result)
 }

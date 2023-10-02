@@ -22,14 +22,14 @@ func (s *Stack) Push(item Item) {
 	s.items = append(s.items, item)
 }
 
-func (s *Stack) Pop() (element Item, isEmpty bool) {
+func (s *Stack) Pop() (element Item) {
 	if s.IsEmpty() {
 		return
 	} else {
 		index := len(s.items) - 1
-		element := (s.items)[index]
+		element = (s.items)[index]
 		s.items = (s.items)[:index]
-		return element, true
+		return element
 	}
 }
 

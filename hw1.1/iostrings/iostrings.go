@@ -2,9 +2,7 @@ package iostrings
 
 import (
 	"bufio"
-	"errors"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 )
@@ -18,11 +16,12 @@ func Read() (input []string, err error) {
 		defer func(file *os.File) {
 			fileCloseErr := file.Close()
 			if fileCloseErr != nil {
-				log.Fatal("Can't close file")
+				log.Println(fileCloseErr.Error())
+				return
 			}
 		}(file)
 		if err != nil {
-			err = errors.New("can't open file")
+			log.Println(err.Error())
 			return
 		}
 		reader = file
@@ -44,11 +43,11 @@ func Write(data []string) (err error) {
 		defer func(file *os.File) {
 			err := file.Close()
 			if err != nil {
-				log.Fatal("Can't close file")
+				log.Println(err.Error())
+				return
 			}
 		}(file)
 		if err != nil {
-			err = fmt.Errorf("Can't append or create file: %s\n", outputFile)
 			return
 		}
 		writer = file
@@ -58,13 +57,14 @@ func Write(data []string) (err error) {
 	defer func(out *bufio.Writer) {
 		err := out.Flush()
 		if err != nil {
-			log.Fatal("Error flushing buffer")
+			log.Println(err.Error())
+			return
 		}
 	}(out)
 
 	for _, line := range data {
 		if _, err = out.WriteString(line + "\n"); err != nil {
-			return errors.New("error writing file")
+			return
 		}
 	}
 	return

@@ -31,7 +31,7 @@ func takeFromStack(operation byte, priority int) bool {
 
 func takeLower(operations *Stack, result *Stack, priority int) (err error) {
 	for operations.Length() > 0 && takeFromStack(operations.Back().Operation, priority) {
-		item, _ := operations.Pop()
+		item := operations.Pop()
 		result.Push(item)
 	}
 	if priority == 0 && operations.Length() == 0 {
@@ -72,11 +72,11 @@ func convertToPostfix(stack *Stack) (err error) {
 	var result, operations Stack
 	openBracket := false
 	for err == nil && stack.Length() > 0 {
-		item, _ := stack.Pop()
+		item := stack.Pop()
 		err = moveItem(&result, &operations, item, &openBracket)
 	}
 	for err == nil && operations.Length() > 0 {
-		item, _ := operations.Pop()
+		item := operations.Pop()
 		if item.Operation == '(' {
 			err = &IncorrectExpressionError{"incorrect bracket order"}
 			break
@@ -84,7 +84,7 @@ func convertToPostfix(stack *Stack) (err error) {
 		result.Push(item)
 	}
 	for err == nil && result.Length() > 0 {
-		item, _ := result.Pop()
+		item := result.Pop()
 		stack.Push(item)
 	}
 	return

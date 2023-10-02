@@ -22,10 +22,6 @@ func min(a, b int) int {
 	return b
 }
 
-func equalStrings(a string, b string) bool {
-	return a == b
-}
-
 func Uniq(input []string, options Options) (output []string, err error) {
 	if options.F < 0 || options.S < 0 {
 		err = errors.New("-f -s flags must be positive integer")
@@ -35,10 +31,6 @@ func Uniq(input []string, options Options) (output []string, err error) {
 	var currentLineIndex int
 	isFirst := true
 	countOfRepeated := 1
-	compare := equalStrings
-	if options.I {
-		compare = strings.EqualFold
-	}
 
 	record := func() {
 		switch {
@@ -81,7 +73,10 @@ func Uniq(input []string, options Options) (output []string, err error) {
 			continue
 		}
 
-		isMatch := compare(currentLine, prevCutLine)
+		isMatch := currentLine == prevCutLine
+		if options.I {
+			isMatch = strings.EqualFold(currentLine, prevCutLine)
+		}
 
 		if !isMatch {
 			record()
