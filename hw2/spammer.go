@@ -15,7 +15,7 @@ func RunPipeline(cmds ...cmd) {
 
 	wg := sync.WaitGroup{}
 
-	for number, currentCmd := range cmds {
+	for index, currentCmd := range cmds {
 		wg.Add(1)
 
 		go func(command func(in, out chan interface{}), in, out chan interface{}) {
@@ -25,7 +25,7 @@ func RunPipeline(cmds ...cmd) {
 			}()
 
 			command(in, out)
-		}(currentCmd, channels[number], channels[number+1])
+		}(currentCmd, channels[index], channels[index+1])
 	}
 
 	wg.Wait()
@@ -37,7 +37,11 @@ func SelectUsers(in, out chan interface{}) {
 
 	for mail := range in {
 		wg.Add(1)
-
+		mailStr, ok := mail.(string)
+		if !ok {
+			log.Println("wrong type")
+			return
+		}
 		go func(email string) {
 			defer wg.Done()
 
@@ -47,7 +51,7 @@ func SelectUsers(in, out chan interface{}) {
 				users.Store(user, struct{}{})
 				out <- user
 			}
-		}(mail.(string))
+		}(mailStr)
 	}
 
 	wg.Wait()
@@ -56,14 +60,24 @@ func SelectUsers(in, out chan interface{}) {
 func SelectMessages(in, out chan interface{}) {
 	wg := sync.WaitGroup{}
 
-	for user := range in {
+	for value := range in {
 		wg.Add(1)
 
-		users := make([]User, 1)
-		users[0] = user.(User)
-		secondUser, ok := <-in
+		users := make([]User, 1, 1)
+		user, ok := value.(User)
+		if !ok {
+			log.Println("wrong type")
+			return
+		}
+		users[0] = user
+		secondValue, ok := <-in
 		if ok {
-			users = append(users, secondUser.(User))
+			secondUser, ok := secondValue.(User)
+			if !ok {
+				log.Println("wrong type")
+				return
+			}
+			users = append(users, secondUser)
 		}
 
 		go func(users []User) {
@@ -85,15 +99,20 @@ func SelectMessages(in, out chan interface{}) {
 }
 
 func CheckSpam(in, out chan interface{}) {
-	const maxHasSpamConnections = 5
 
-	for message := range in {
+	for value := range in {
 		messageExist := true
 		var wg sync.WaitGroup
 
-		for i := 0; i < maxHasSpamConnections; i++ {
+		for i := 0; i < HasSpamMaxAsyncRequests; i++ {
 			if !messageExist {
 				break
+			}
+
+			msgId, ok := value.(MsgID)
+			if !ok {
+				log.Println("wrong type")
+				return
 			}
 
 			wg.Add(1)
@@ -108,10 +127,10 @@ func CheckSpam(in, out chan interface{}) {
 				}
 
 				out <- MsgData{id, hasSpam}
-			}(message.(MsgID))
+			}(msgId)
 
-			if i < maxHasSpamConnections-1 {
-				message, messageExist = <-in
+			if i < HasSpamMaxAsyncRequests-1 {
+				value, messageExist = <-in
 			}
 		}
 
@@ -119,30 +138,23 @@ func CheckSpam(in, out chan interface{}) {
 	}
 }
 
-type ResultsSorter []MsgData
-
-func (a ResultsSorter) Len() int {
-	return len(a)
-}
-
-func (a ResultsSorter) Less(i, j int) bool {
-	if a[i].HasSpam == a[j].HasSpam {
-		return a[i].ID < a[j].ID
-	}
-	return a[i].HasSpam && !a[j].HasSpam
-}
-
-func (a ResultsSorter) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
 func CombineResults(in, out chan interface{}) {
 	result := make([]MsgData, 0)
 	for res := range in {
-		result = append(result, res.(MsgData))
+		msgData, ok := res.(MsgData)
+		if !ok {
+			log.Println("wrong type")
+			return
+		}
+		result = append(result, msgData)
 	}
 
-	sort.Sort(ResultsSorter(result))
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].HasSpam == result[j].HasSpam {
+			return result[i].ID < result[j].ID
+		}
+		return result[i].HasSpam && !result[j].HasSpam
+	})
 
 	for _, res := range result {
 		out <- strconv.FormatBool(res.HasSpam) + " " + strconv.FormatUint(uint64(res.ID), 10)
