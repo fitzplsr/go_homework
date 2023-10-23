@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"reflect"
 	"sort"
 	"strconv"
 	"sync"
@@ -9,7 +10,7 @@ import (
 
 func RunPipeline(cmds ...cmd) {
 	channels := make([]chan interface{}, len(cmds)+1)
-	for i := 0; i < len(cmds)+1; i++ {
+	for i := range channels {
 		channels[i] = make(chan interface{})
 	}
 
@@ -35,11 +36,11 @@ func SelectUsers(in, out chan interface{}) {
 	var users = &sync.Map{}
 	wg := sync.WaitGroup{}
 
-	for mail := range in {
+	for value := range in {
 		wg.Add(1)
-		mailStr, ok := mail.(string)
+		mail, ok := value.(string)
 		if !ok {
-			log.Println("wrong type")
+			log.Printf("[SelectUsers()] Wrong type\tExpected: string Actually: %v", reflect.TypeOf(value))
 			return
 		}
 		go func(email string) {
@@ -51,7 +52,7 @@ func SelectUsers(in, out chan interface{}) {
 				users.Store(user, struct{}{})
 				out <- user
 			}
-		}(mailStr)
+		}(mail)
 	}
 
 	wg.Wait()
@@ -66,7 +67,7 @@ func SelectMessages(in, out chan interface{}) {
 		users := make([]User, 1, 1)
 		user, ok := value.(User)
 		if !ok {
-			log.Println("wrong type")
+			log.Printf("[SelectUsers()] Wrong type\tExpected: User Actually: %v", reflect.TypeOf(value))
 			return
 		}
 		users[0] = user
@@ -74,7 +75,7 @@ func SelectMessages(in, out chan interface{}) {
 		if ok {
 			secondUser, ok := secondValue.(User)
 			if !ok {
-				log.Println("wrong type")
+				log.Printf("[SelectUsers()] Wrong type\tExpected: User Actually: %v", reflect.TypeOf(secondValue))
 				return
 			}
 			users = append(users, secondUser)
@@ -111,7 +112,7 @@ func CheckSpam(in, out chan interface{}) {
 
 			msgId, ok := value.(MsgID)
 			if !ok {
-				log.Println("wrong type")
+				log.Printf("[SelectUsers()] Wrong type\tExpected: MsgId Actually: %v", reflect.TypeOf(value))
 				return
 			}
 
@@ -143,7 +144,7 @@ func CombineResults(in, out chan interface{}) {
 	for res := range in {
 		msgData, ok := res.(MsgData)
 		if !ok {
-			log.Println("wrong type")
+			log.Printf("[SelectUsers()] Wrong type\tExpected: MsgData Actually: %v", reflect.TypeOf(res))
 			return
 		}
 		result = append(result, msgData)
